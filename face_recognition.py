@@ -10,28 +10,35 @@ def distance(v1, v2):
     return np.sqrt(((v1-v2)**2).sum())
 
 def knn(train, test, k=5):
+    print(train,"\n")
     dist = []
-
     for i in range(train.shape[0]):
         # Get the vector and label
         ix = train[i, :-1]
+        # print(train[i, :-1])
         iy = train[i, -1]
+        # print(train[i, -1])
 
         # Compute the distance from the test point
         d = distance(test, ix)
         dist.append([d, iy]) 
+        # print(dist)
 
     # Sort based on distance and get top k
-    dk = sorted(dist, key=lambda x:x[0])[:k]
+    dk = sorted(dist, key=lambda x: x[0])[:k]
+    # print(dk)
 
     # Retrieve only the labels
     labels = np.array(dk)[:, -1]
+    # print(labels)
 
     # Get frequencies of each label
     output = np.unique(labels, return_counts=True)
+    # print(output[1])
 
     # Find max frequency and corresponding label
     index = np.argmax(output[1])
+    # print(index)
     return output[0][index]
 
 cap = cv2.VideoCapture(0)
@@ -48,26 +55,43 @@ names = {}      # mapping between id and name
 
 for fx in os.listdir(dataset_path):
     # For interaction with os, looping in our stored dataset-values  in the file
+    # print(fx)
     if fx.endswith('.npy'):
         names[class_id] = fx[:-4]
+        # names.sort()
         # Taking entire string except ".npy" 
         data_item = np.load(dataset_path + fx)
+        # print(data_item)
         face_data.append(data_item)
+        # print(face_data)
 
+        # print(data_item.shape)
+        # print(np.ones(data_item.shape[0],))
         target = class_id * np.ones((data_item.shape[0],))
         # Every class ID is associated with every data_item length : array of ones of shape of data_item
         # n * array of ones => array of n
         # EG 2 * array of ones => array of 2's
+        # print(target)
         class_id += 1
         labels.append(target)
+        # print(labels)
 
+print(names)
+# print(face_data)
 face_dataset = np.concatenate(face_data, axis=0)
+# print(face_dataset)
+# x =  np.concatenate(labels, axis=0)
+# print(x)
 face_labels = np.concatenate(labels, axis=0).reshape((-1, 1))
-print(face_labels.shape)
-print(face_dataset.shape)
+# -1 mean unknown number of row or column, here 1 column and row as per numpy
+# print(face_labels.shape[0])
+# print(face_labels)
+# print(face_labels.shape)
+# print(face_dataset.shape)
 
 trainset = np.concatenate((face_dataset, face_labels), axis=1)
-print(trainset.shape)
+# print(trainset)
+# print(trainset.shape)
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 
@@ -82,15 +106,20 @@ while True:
 
     # Detect multi faces in the image
     faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-
+    # print(faces)
     for face in faces:
         x, y, w, h = face
+        # print(face)
 
         # Get the face ROI
         offset = 5
 
         face_section = frame[y-offset: y+h+offset, x-offset: x+w+offset]
+        # print(face_section)
+        # print("\n NEXT \n")
         face_section = cv2.resize(face_section, (100, 100))
+        # print(face_section)
+
         # Resize face to 100x100
 
         out = knn(trainset, face_section.flatten())
